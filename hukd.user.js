@@ -4,6 +4,8 @@
 // ==/UserScript==
 
 
+const DEAL_SELECTOR = '.thread--deal';
+
 /** HTML Snippets: **/
 
 let customHTML = `
@@ -19,15 +21,20 @@ let customHTML = `
 </style>
 <button id="sortScore" class="btn--mode-special btn cust-btn">Sort Temp</button>
 <button id="sortPrice" class="btn--mode-special btn cust-btn">Sort Price</button>
-<button id="over200" class="btn--mode-special btn cust-btn">&gt;=200�</button>
-<button id="over300" class="btn--mode-special btn cust-btn">&gt;=300�</button>
-<button id="over500" class="btn--mode-special btn cust-btn">&gt;=500�</button>
+<button id="over200" class="btn--mode-special btn cust-btn">&gt;=200</button>
+<button id="over300" class="btn--mode-special btn cust-btn">&gt;=300</button>
+<button id="over500" class="btn--mode-special btn cust-btn">&gt;=500</button>
 <button id="minPrice" class="btn--mode-special btn cust-btn">Min Price</button>
 <button id="maxPrice" class="btn--mode-special btn cust-btn">Max Price</button>
+<button id="load5" class="btn--mode-special btn cust-btn">Load Pages 2-6</button>
+<button id="load10" class="btn--mode-special btn cust-btn">Load Pages 2-11</button>
 `;
 
 let content = document.querySelector('.tGrid-row.height--all-full');
 content.innerHTML = customHTML + content.innerHTML;
+
+let nextPageIdx = 2;
+
 
 /** Button Handlers: **/
 
@@ -54,6 +61,8 @@ document.querySelector('#maxPrice').addEventListener('click', e => {
         return deals.filter(deal => deal.price <= max);
     });
 });
+document.querySelector('#load5').addEventListener('click', e => loadPages(5, e) );
+document.querySelector('#load10').addEventListener('click', e => loadPages(10, e) );
 
 function promptFloat() {
     return parseFloat(prompt());
@@ -82,7 +91,7 @@ function overTemp(temp) {
 function alterDeals(alterCB) {
     let dealParent = null;
 
-    let deals = Array.from(document.querySelectorAll('.thread--deal')).map(function (dealElem) {
+    let deals = Array.from(document.querySelectorAll(DEAL_SELECTOR)).map(function (dealElem) {
         let deal = scrapeDealElem(dealElem);
         if (!dealParent) {
             dealParent = dealElem.parentElement;
@@ -124,8 +133,8 @@ function scrapeDealElem(elem) {
     let priceElem = elem.querySelector('.thread-price');
 
     if (priceElem) {
-        // NB: parseInt cannot handle the � prefix nor commas.
-        price = parseInt(priceElem.innerText.replace('�', '').replace(',', ''));
+        // NB: parseInt cannot handle the £ prefix nor commas.
+        price = parseInt(priceElem.innerText.replace('£', '').replace(',', ''));
     }
 
     return {
@@ -134,7 +143,33 @@ function scrapeDealElem(elem) {
     };
 }
 
-function loadPage() {
-    console.log('load');
+async function loadPages(numPagesToLoad, event) {
+    event.srcElement.innerText = '...';
+    let dealContainer = getDealContainer();
+    let baseURL = location.origin + location.pathname;
+    let loadedCount = 0;
+    for (let i = 0; i < numPagesToLoad; i++) {
+        let nodes = Array.from(await getPageDeals(baseURL + '?page=' + nextPageIdx));
+        // nodes.forEach(n => { container.appendChild(n); });
+        let nodeHTML = nodes.map(n => n.outerHTML).join('');
+        dealContainer.innerHTML = dealContainer.innerHTML + nodeHTML; 
+        nextPageIdx++;
+    }
+    // Update button text:
+    event.srcElement.innerText = `Load Pages ${nextPageIdx}-${nextPageIdx+numPagesToLoad-1}`;
+}
 
+
+async function getPageDeals(url) {
+    let dp = new DOMParser();
+    let resp = await fetch(url);
+    let page = dp.parseFromString(await resp.text(), 'text/html');
+    return page.querySelectorAll(DEAL_SELECTOR);
+}
+
+/**
+ * @returns {Element}
+ */
+function getDealContainer() {
+    return document.querySelector(DEAL_SELECTOR).parentElement;
 }

@@ -136,11 +136,69 @@ function scrapeDealElem(elem) {
         // NB: parseInt cannot handle the £ prefix nor commas.
         price = parseInt(priceElem.innerText.replace('£', '').replace(',', ''));
     }
+    
+    // Parse date:
+    let ribbons = elem.querySelectorAll('.metaRibbon');
+    let lastRibbon = ribbons[ribbons.length - 1];
+    let dateStr = lastRibbon.querySelector('.hide--toW3').innerText;
+    let date = parseDealDate(dateStr);
+    
+    return { score, price, date, dateStr };
+}
 
-    return {
-        score: score,
-        price: price,
-    };
+/**
+ * Convert HUKD deal date string into JS {Date}.
+ * Example formats for date string:
+ * - Made hot 1 h, 13 m ago
+ * - Made hot 34 m ago
+ * - Posted 13th Nov
+ * - Posted 24th Nov 2019
+ * - Posted 7 h, 0 m ago
+ * @param {str} str The HUKD date string.
+ * @returns {Date}
+ */
+function parseDealDate(str) {
+    const MAX_MONTH_STR_LEN = 6; // Length of e.g. "31 Jan"
+    
+    // Remove unneeded words:
+    for (let keyword of ['Made hot', 'ago', 'Posted', 'Refreshed']) {
+        str = str.replace(keyword, '');
+    }
+    str = str.trim();
+    
+    let prevLen = str.length;
+    // Remove ordinal suffix (st, nd, rd, th), if applicable:
+    for (let suffix of ['st', 'nd', 'rd', 'th']) {
+        str = str.replace(suffix, '');
+    }
+    
+    let date = null;
+    // If this has a month string e.g. "13 Nov":
+    if (prevLen !== str.length) {
+        // If the str does not have year part:
+        if (str.length <= MAX_MONTH_STR_LEN) {
+            // Append the year part:
+            let now = new Date();
+            str += ' ' + now.getFullYear();
+        }
+        date = new Date(str);
+        
+    // This is a time-only date e.g. "1 h, 34 m":
+    } else {
+        let hours = 0; // Hours/mins to subtract from curr date.
+        let mins = 0; 
+        let parts = str.split(',');
+        if (parts.length > 1) {
+            hours = parseInt(parts[0]);
+            mins = parseInt(parts[1]);
+        } else {
+            mins = parseInt(parts[0]);
+        }
+        let secsDiff = hours*60*60 + 60*mins;
+        date = new Date(Date.now() - secsDiff*1000);
+    }
+    
+    return date;
 }
 
 async function loadPages(numPagesToLoad, event) {

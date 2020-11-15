@@ -144,6 +144,7 @@ function scrapeDealElem(elem) {
 }
 
 async function loadPages(numPagesToLoad, event) {
+    // Show "progressing" indicator on clicked button:
     event.srcElement.innerText = '...';
     let dealContainer = getDealContainer();
     let baseURL = location.origin + location.pathname;
@@ -155,8 +156,9 @@ async function loadPages(numPagesToLoad, event) {
         dealContainer.innerHTML = dealContainer.innerHTML + nodeHTML; 
         nextPageIdx++;
     }
-    // Update button text:
-    event.srcElement.innerText = `Load Pages ${nextPageIdx}-${nextPageIdx+numPagesToLoad-1}`;
+    // Update visible page numbers on all buttons:
+    document.querySelector('#load5').innerText = `Load Pages ${nextPageIdx}-${nextPageIdx+4}`;
+    document.querySelector('#load10').innerText = `Load Pages ${nextPageIdx}-${nextPageIdx+9}`
 }
 
 

@@ -54,7 +54,7 @@ document.querySelector('#maxPrice').addEventListener('click', e => {
 });
 document.querySelector('#load5').addEventListener('click', e => loadPages(5, e) );
 document.querySelector('#loadX').addEventListener('click', e => {
-    let pages = promptInt();
+    let pages = promptInt(true, 1, 50);
     if (pages===null) return; // Stop on bad input
     loadPages(pages, e);
 });
@@ -148,7 +148,7 @@ function alterDeals(alterCB) {
  */
 function scrapeDealElem(elem) {
     // Parse Score:
-    let score = 0;
+    let score = 0; // NB: Score CAN be a negative value here.
     let voteElem = elem.querySelector('.vote-box');
     if (voteElem) {
         score = parseInt(voteElem.innerText);

@@ -3,7 +3,6 @@
 // @include    https://www.hotukdeals.com*
 // ==/UserScript==
 
-
 const DEAL_SELECTOR = '.thread--deal';
 
 /** HTML Snippets: **/
@@ -27,7 +26,7 @@ let customHTML = `
 <button id="minPrice" class="btn--mode-special btn cust-btn">Min Price</button>
 <button id="maxPrice" class="btn--mode-special btn cust-btn">Max Price</button>
 <button id="load5" class="btn--mode-special btn cust-btn">Load Pages 2-6</button>
-<button id="load10" class="btn--mode-special btn cust-btn">Load Pages 2-11</button>
+<button id="loadX" class="btn--mode-special btn cust-btn">Load X Pages</button>
 `;
 
 let content = document.querySelector('.tGrid-row.height--all-full');
@@ -45,28 +44,55 @@ document.querySelector('#over300').addEventListener('click', e => overTemp(300))
 document.querySelector('#over500').addEventListener('click', e => overTemp(500));
 document.querySelector('#minPrice').addEventListener('click', e => {
     let min = promptFloat();
-    if (Number.isNaN(min)) {
-        return;
-    }
-    alterDeals(deals => {
-        return deals.filter(deal => deal.price >= min);
-    });
+    if (min===null) return; // Stop on bad input
+    alterDeals( deals =>  deals.filter(deal => deal.price >= min) );
 });
 document.querySelector('#maxPrice').addEventListener('click', e => {
     let max = promptFloat();
-    if (Number.isNaN(max)) {
-        return;
-    }
-    alterDeals(deals => {
-        return deals.filter(deal => deal.price <= max);
-    });
+    if (max===null) return; // Stop on bad input
+    alterDeals( deals => deals.filter(deal => deal.price <= max) );
 });
 document.querySelector('#load5').addEventListener('click', e => loadPages(5, e) );
-document.querySelector('#load10').addEventListener('click', e => loadPages(10, e) );
+document.querySelector('#loadX').addEventListener('click', e => {
+    let pages = promptInt();
+    if (pages===null) return; // Stop on bad input
+    loadPages(pages, e);
+});
 
-function promptFloat() {
-    return parseFloat(prompt());
+
+/** Functions: Fetch User Input: */
+
+/**
+ * Prompt user for a float value.
+ * @returns {?number} Prompted number or `null` if user supplied bad input or filters are unmatched.
+ */
+function promptFloat(abs=false, min=null, max=null) {
+    return validatePromptedNumber(parseFloat(prompt()), abs, min, max);
 }
+/**
+ * Prompt user for a integer value.
+ * @returns {?number} Prompted number or `null` if user supplied bad input or filters are unmatched.
+ */
+function promptInt(abs=false, min=null, max=null) {
+    return validatePromptedNumber(parseInt(prompt()), abs, min, max);
+}
+
+/**
+ * @returns {?number} Number or `null` if user supplied bad input or filters are unmatched.
+ */
+function validatePromptedNumber(rawVal, abs=false, min=null, max=null) {
+    let val = abs ? Math.abs(rawVal) : rawVal;
+    if (min !== null && rawVal < min) {
+        return null;
+    }
+    if (max !== null && rawVal > max) {
+        return null
+    }
+    return Number.isNaN(val) ? null : val;
+}
+
+
+/** Functions: DOM modification: **/
 
 function sortScore() {
     alterDeals(deals => {
@@ -201,9 +227,14 @@ function parseDealDate(str) {
     return date;
 }
 
+/**
+ * 
+ * @param {*} numPagesToLoad 
+ * @param {Event} event 
+ */
 async function loadPages(numPagesToLoad, event) {
     // Show "progressing" indicator on clicked button:
-    event.srcElement.innerText = '...';
+    event.target.innerText = '...';
     let dealContainer = getDealContainer();
     let baseURL = location.origin + location.pathname;
     let loadedCount = 0;
@@ -216,7 +247,7 @@ async function loadPages(numPagesToLoad, event) {
     }
     // Update visible page numbers on all buttons:
     document.querySelector('#load5').innerText = `Load Pages ${nextPageIdx}-${nextPageIdx+4}`;
-    document.querySelector('#load10').innerText = `Load Pages ${nextPageIdx}-${nextPageIdx+9}`
+    document.querySelector('#loadX').innerText = `Load Pages ${nextPageIdx}-${nextPageIdx+9}`
 }
 
 

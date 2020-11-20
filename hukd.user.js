@@ -5,7 +5,10 @@
 
 const DEAL_SELECTOR = '.thread--deal';
 
+
 /** HTML Snippets: **/
+
+let nextPageIdx = 2;
 
 let customHTML = `
 <style>
@@ -29,35 +32,45 @@ let customHTML = `
 <button id="loadX" class="btn--mode-special btn cust-btn">Load X Pages</button>
 `;
 
+// Add the custom HTML to the page:
 let content = document.querySelector('.tGrid-row.height--all-full');
 content.innerHTML = customHTML + content.innerHTML;
 
-let nextPageIdx = 2;
-
-
 /** Button Handlers: **/
 
-document.querySelector('#sortScore').addEventListener('click', sortScore);
-document.querySelector('#sortPrice').addEventListener('click', sortPrice);
-document.querySelector('#over200').addEventListener('click', e => overTemp(200));
-document.querySelector('#over300').addEventListener('click', e => overTemp(300));
-document.querySelector('#over500').addEventListener('click', e => overTemp(500));
-document.querySelector('#minPrice').addEventListener('click', e => {
-    let min = promptFloat();
+function btnClickHandler(selector, cb, showLoading=true) {
+    let btn = document.querySelector(selector);
+    btn.addEventListener('click', async e => { 
+        let initialBtnText = btn.innerText;
+        if (showLoading) {
+            btn.innerText = '...'; // Set button "Loading" text. A small delay is necessary here for the DOM to fully
+            await getDelay(50);    // update button text before enacting any other "slow" DOM modifications.
+        }
+        cb(e); // Run callback.
+        if (showLoading) btn.innerText = initialBtnText;
+    });
+}
+btnClickHandler('#sortScore', sortScore);
+btnClickHandler('#sortPrice', sortPrice);
+btnClickHandler('#over200',  e => overTemp(200));
+btnClickHandler('#over300',  e => overTemp(300));
+btnClickHandler('#over500',  e => overTemp(500));
+btnClickHandler('#minPrice', e => {
+    let min = promptFloat(); // Get min value.
     if (min===null) return; // Stop on bad input
     alterDeals( deals =>  deals.filter(deal => deal.price >= min) );
 });
-document.querySelector('#maxPrice').addEventListener('click', e => {
+btnClickHandler('#maxPrice', e => {
     let max = promptFloat();
     if (max===null) return; // Stop on bad input
     alterDeals( deals => deals.filter(deal => deal.price <= max) );
 });
-document.querySelector('#load5').addEventListener('click', e => loadPages(5, e) );
-document.querySelector('#loadX').addEventListener('click', e => {
+btnClickHandler('#load5', e => loadPages(5, e), false); // `loadPages` will update button text instead.
+btnClickHandler('#loadX', e => {
     let pages = promptInt(true, 1, 50);
     if (pages===null) return; // Stop on bad input
     loadPages(pages, e);
-});
+}, false);
 
 
 /** Functions: Fetch User Input: */
@@ -263,4 +276,10 @@ async function getPageDeals(url) {
  */
 function getDealContainer() {
     return document.querySelector(DEAL_SELECTOR).parentElement;
+}
+
+/** Helper Methods: **/
+
+function getDelay(ms){
+	return new Promise(resolve => setTimeout(()=>resolve(ms), ms));
 }

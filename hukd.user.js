@@ -30,6 +30,8 @@ let customHTML = `
 <button id="maxPrice" class="btn--mode-special btn cust-btn">Max Price</button>
 <button id="load5" class="btn--mode-special btn cust-btn">Load Pages 2-6</button>
 <button id="loadX" class="btn--mode-special btn cust-btn">Load X Pages</button>
+<button id="filterToKeywords" class="btn--mode-special btn cust-btn">Filter to Keywords</button>
+<button id="removeKeywords" class="btn--mode-special btn cust-btn">Remove Keywords</button>
 `;
 
 // Add the custom HTML to the page:
@@ -72,6 +74,8 @@ btnClickHandler('#loadX', e => {
     if (pages===null) return; // Stop on bad input
     loadPages(pages, e);
 }, false);
+btnClickHandler('#filterToKeywords', e => filterKeywords(true));
+btnClickHandler('#removeKeywords', e => filterKeywords(false));
 
 
 /** Functions: Fetch User Input: */
@@ -90,6 +94,21 @@ function promptFloat(abs=false, min=null, max=null) {
 function promptInt(abs=false, min=null, max=null) {
     return validatePromptedNumber(parseInt(prompt()), abs, min, max);
 }
+/**
+ * Prompt user for string.
+ * @returns {?number} String or `null` if user supplied bad input or filters are unmatched.
+ */
+function promptString(toLower=false, trim=true, allowEmpty=false) {
+    let str = prompt();
+    if (str.trim() === '') { // Reject empty input.
+        return null;
+    }
+    str = trim ? str.trim() : str;
+    console.log(toLower);
+    str = toLower ? str.toLowerCase() : str;
+    return str;
+}
+
 
 /**
  * @returns {?number} Number or `null` if user supplied bad input or filters are unmatched.
@@ -120,9 +139,21 @@ function sortPrice() {
     });
 }
 function overTemp(temp) {
-    alterDeals(deals => {
-        return deals.filter(deal => deal.score >= temp);
-    });
+    alterDeals( deals => deals.filter(deal => deal.score >= temp) );
+}
+
+/**
+ * @param {boolean} whitelist Flag for whitelist or blacklist.
+ */
+function filterKeywords(whitelist=false) {
+    let word = promptString(true); // Lowercase input only.
+    if (word===null) return; // Exit on bad input.
+    
+    if (whitelist) {  // Whitelist:
+        alterDeals( deals => deals.filter(deal => deal.title.toLowerCase().includes(word)) );
+    } else {       // Blacklist:
+        alterDeals( deals => deals.filter(deal => !deal.title.toLowerCase().includes(word)) );
+    }
 }
 
 /**
@@ -183,7 +214,10 @@ function scrapeDealElem(elem) {
     let dateStr = lastRibbon.querySelector('.hide--toW3').innerText;
     let date = parseDealDate(dateStr);
     
-    return { score, price, date, dateStr };
+    // Parse title:
+    let title = elem.querySelector('.thread-title').innerText;
+    
+    return { score, price, date, dateStr, title };
 }
 
 /**

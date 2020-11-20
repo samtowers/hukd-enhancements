@@ -5,10 +5,10 @@
 
 const DEAL_SELECTOR = '.thread--deal';
 
-
-/** HTML Snippets: **/
-
 let nextPageIdx = 2;
+
+
+/** Add Custom HTML to Page: **/
 
 let customHTML = `
 <style>
@@ -36,7 +36,8 @@ let customHTML = `
 let content = document.querySelector('.tGrid-row.height--all-full');
 content.innerHTML = customHTML + content.innerHTML;
 
-/** Button Handlers: **/
+
+/** Bind Button Handlers: **/
 
 function btnClickHandler(selector, cb, showLoading=true) {
     let btn = document.querySelector(selector);

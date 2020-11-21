@@ -100,11 +100,10 @@ function promptInt(abs=false, min=null, max=null) {
  */
 function promptString(toLower=false, trim=true, allowEmpty=false) {
     let str = prompt();
-    if (str.trim() === '') { // Reject empty input.
+    if (str === null || !allowEmpty && str.trim() === '') { // Reject empty input.
         return null;
     }
     str = trim ? str.trim() : str;
-    console.log(toLower);
     str = toLower ? str.toLowerCase() : str;
     return str;
 }

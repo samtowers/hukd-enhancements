@@ -3,7 +3,7 @@
 // @include    https://www.hotukdeals.com*
 // ==/UserScript==
 
-const DEAL_SELECTOR = '.thread--deal';
+const DEAL_SELECTOR = 'article.thread--type-list';
 
 let nextPageIdx = 2;
 
@@ -163,7 +163,7 @@ function alterDeals(alterCB) {
 
     let deals = Array.from(document.querySelectorAll(DEAL_SELECTOR)).map(function (dealElem) {
         let deal = scrapeDealElem(dealElem);
-        if (!dealParent) {
+        if (!dealParent) { // Fetch parent element from first matching deal.
             dealParent = dealElem.parentElement;
         }
         dealElem.remove();
@@ -174,9 +174,11 @@ function alterDeals(alterCB) {
     if (deals.length < 1) {
         return;
     }
-
+    
     let updatedDeals = alterCB(deals);
-
+    console.log('dealsBefore', deals);
+    console.log('dealsAfter', updatedDeals);
+    
     // Delete old batch separator, if exists:
     let bs = document.querySelector('#batchSeparator');
     if (bs) {

@@ -296,7 +296,6 @@ async function loadPages(numPagesToLoad, event) {
     }
     // Update visible page numbers on all buttons:
     document.querySelector('#load5').innerText = `Load Pages ${nextPageIdx}-${nextPageIdx+4}`;
-    document.querySelector('#loadX').innerText = `Load Pages ${nextPageIdx}-${nextPageIdx+9}`
 }
 
 

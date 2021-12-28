@@ -1,6 +1,7 @@
 // ==UserScript==
 // @name       HUKD Enhancements
 // @include    https://www.hotukdeals.com*
+// @version    1.0.0
 // ==/UserScript==
 
 const DEAL_SELECTOR = 'article.thread--type-list';

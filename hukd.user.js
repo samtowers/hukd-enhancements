@@ -8,9 +8,7 @@ const DEAL_SELECTOR = 'article.thread--type-list';
 
 let nextPageIdx = 2;
 
-// =============
 // Todo: See 1n.
-// =============
 
 /** Add Custom HTML to Page: **/
 

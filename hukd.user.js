@@ -1,14 +1,16 @@
 // ==UserScript==
 // @name       HUKD Enhancements
 // @include    https://www.hotukdeals.com*
-// @version    1.0.0
+// @version    1.0.1
 // ==/UserScript==
 
 const DEAL_SELECTOR = 'article.thread--type-list';
 
 let nextPageIdx = 2;
 
+//
 // Todo: See 1n.
+// 
 
 /** Add Custom HTML to Page: **/
 

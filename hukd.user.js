@@ -6,6 +6,10 @@
 
 const DEAL_SELECTOR = 'article.thread--type-list';
 
+/**
+ * @global Track which pages have been loaded in.
+ * @see loadPages
+ */
 let nextPageIdx = 2;
 
 // Todo: See 1n.
@@ -34,6 +38,7 @@ let customHTML = `
 <button id="loadX" class="btn--mode-special btn cust-btn">Load X Pages</button>
 <button id="filterToKeywords" class="btn--mode-special btn cust-btn">Filter to Keywords</button>
 <button id="removeKeywords" class="btn--mode-special btn cust-btn">Remove Keywords</button>
+<button id="hideExpired" class="btn--mode-special btn cust-btn">Hide Expired</button>
 `;
 
 // Add the custom HTML to the page:
@@ -78,7 +83,7 @@ btnClickHandler('#loadX', e => {
 }, false);
 btnClickHandler('#filterToKeywords', e => filterKeywords(true));
 btnClickHandler('#removeKeywords', e => filterKeywords(false));
-
+btnClickHandler('#hideExpired', e => hideExpired(false));
 
 /** Functions: Fetch User Input: */
 
@@ -110,7 +115,6 @@ function promptString(toLower=false, trim=true, allowEmpty=false) {
     return str;
 }
 
-
 /**
  * @returns {?number} Number or `null` if user supplied bad input or filters are unmatched.
  */
@@ -124,7 +128,6 @@ function validatePromptedNumber(rawVal, abs=false, min=null, max=null) {
     }
     return Number.isNaN(val) ? null : val;
 }
-
 
 /** Functions: DOM modification: **/
 
@@ -158,7 +161,17 @@ function filterKeywords(whitelist=false) {
 }
 
 /**
- * Update the DOM and alter deals as per callback.
+ * Remove expired deals from list.
+ */
+function hideExpired() {
+    alterDeals(deals => deals.filter(deal => !deal.expired));
+}
+
+/**
+ * Add, remove or reorder deals and update the DOM.
+ * Deals will then be re-rendered using content from `deals[i].elem.outerHTML`.
+ * @param alterCB Example CB: deals => deals.filter(deal => deal.score>=200)
+ * @see scrapeDealElem For how items in `deals` array are set.
  */
 function alterDeals(alterCB) {
     let dealParent = null;
@@ -192,17 +205,20 @@ function alterDeals(alterCB) {
 }
 
 /**
- * Parse price, score etc from a deal element.
+ * Scrape price, score etc from a deal element.
  */
 function scrapeDealElem(elem) {
-    // Parse Score:
+    // Scrape Score:
     let score = 0; // NB: Score CAN be a negative value here.
     let voteElem = elem.querySelector('.vote-box');
     if (voteElem) {
         score = parseInt(voteElem.innerText);
     }
 
-    // Parse Price:
+    // Scrape expired:
+    let expired = voteElem.classList.contains('text--color-grey');
+
+    // Scrape Price:
     let price = 0;
     let priceElem = elem.querySelector('.thread-price');
 
@@ -211,16 +227,16 @@ function scrapeDealElem(elem) {
         price = parseInt(priceElem.innerText.replace('£', '').replace(',', ''));
     }
     
-    // Parse date:
+    // Scrape date:
     let ribbons = elem.querySelectorAll('.metaRibbon');
     let lastRibbon = ribbons[ribbons.length - 1];
     let dateStr = lastRibbon.querySelector('.hide--toW3').innerText;
     let date = parseDealDate(dateStr);
     
-    // Parse title:
+    // Scrape title:
     let title = elem.querySelector('.thread-title').innerText;
     
-    return { score, price, date, dateStr, title };
+    return { score, expired, price, date, dateStr, title };
 }
 
 /**
@@ -279,9 +295,10 @@ function parseDealDate(str) {
 }
 
 /**
- * 
+ * Load content from other pages, and add to DOM.
  * @param {*} numPagesToLoad 
  * @param {Event} event 
+ * @see nextPageIdx (Global)
  */
 async function loadPages(numPagesToLoad, event) {
     // Show "progressing" indicator on clicked button:
@@ -299,7 +316,6 @@ async function loadPages(numPagesToLoad, event) {
     // Update visible page numbers on all buttons:
     document.querySelector('#load5').innerText = `Load Pages ${nextPageIdx}-${nextPageIdx+4}`;
 }
-
 
 async function getPageDeals(url) {
     let dp = new DOMParser();

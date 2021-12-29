@@ -1,0 +1,7 @@
+Expired
+cept-vote-box vote-box vote-box--muted space--h-2 border border--color-borderGrey bRad--a text--color-grey space--mr-3
+
+text--color-grey
+
+Active
+cept-vote-box vote-box overflow--hidden border border--color-borderGrey bRad--a

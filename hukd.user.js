@@ -41,16 +41,46 @@ let customHTML = `
 <button id="hideExpired" class="btn--mode-special btn cust-btn">Hide Expired</button>
 `;
 
-// Add the custom HTML to the page:
-let content = document.querySelector('.tGrid-row.height--all-full');
-content.innerHTML = customHTML + content.innerHTML;
+setTimeout(main, 1000);
+
+function main() {
+    // Add the custom HTML to the page:
+    let content = document.querySelector('.tGrid-row.height--all-full');
+    content.innerHTML = customHTML + content.innerHTML;
 
 
-/** Bind Button Handlers: **/
+    /** Bind Button Handlers: **/
+
+    btnClickHandler('#sortScore', sortScore);
+    btnClickHandler('#sortPrice', sortPrice);
+    btnClickHandler('#over200',  e => overTemp(200));
+    btnClickHandler('#over300',  e => overTemp(300));
+    btnClickHandler('#over500',  e => overTemp(500));
+    btnClickHandler('#minPrice', e => {
+        let min = promptFloat(); // Get min value.
+        if (min===null) return; // Stop on bad input
+        alterDeals( deals =>  deals.filter(deal => deal.price >= min) );
+    });
+    btnClickHandler('#maxPrice', e => {
+        let max = promptFloat();
+        if (max===null) return; // Stop on bad input
+        alterDeals( deals => deals.filter(deal => deal.price <= max) );
+    });
+    btnClickHandler('#load5', e => loadPages(5, e), false); // `loadPages` will update button text instead.
+    btnClickHandler('#loadX', e => {
+        let pages = promptInt(true, 1, 50);
+        if (pages===null) return; // Stop on bad input
+        loadPages(pages, e);
+    }, false);
+    btnClickHandler('#filterToKeywords', e => filterKeywords(true));
+    btnClickHandler('#removeKeywords', e => filterKeywords(false));
+    btnClickHandler('#hideExpired', e => hideExpired(false));
+}
+
 
 function btnClickHandler(selector, cb, showLoading=true) {
     let btn = document.querySelector(selector);
-    btn.addEventListener('click', async e => { 
+    btn.addEventListener('click', async e => {
         let initialBtnText = btn.innerText;
         if (showLoading) {
             btn.innerText = '...'; // Set button "Loading" text. A small delay is necessary here for the DOM to fully
@@ -60,30 +90,6 @@ function btnClickHandler(selector, cb, showLoading=true) {
         if (showLoading) btn.innerText = initialBtnText;
     });
 }
-btnClickHandler('#sortScore', sortScore);
-btnClickHandler('#sortPrice', sortPrice);
-btnClickHandler('#over200',  e => overTemp(200));
-btnClickHandler('#over300',  e => overTemp(300));
-btnClickHandler('#over500',  e => overTemp(500));
-btnClickHandler('#minPrice', e => {
-    let min = promptFloat(); // Get min value.
-    if (min===null) return; // Stop on bad input
-    alterDeals( deals =>  deals.filter(deal => deal.price >= min) );
-});
-btnClickHandler('#maxPrice', e => {
-    let max = promptFloat();
-    if (max===null) return; // Stop on bad input
-    alterDeals( deals => deals.filter(deal => deal.price <= max) );
-});
-btnClickHandler('#load5', e => loadPages(5, e), false); // `loadPages` will update button text instead.
-btnClickHandler('#loadX', e => {
-    let pages = promptInt(true, 1, 50);
-    if (pages===null) return; // Stop on bad input
-    loadPages(pages, e);
-}, false);
-btnClickHandler('#filterToKeywords', e => filterKeywords(true));
-btnClickHandler('#removeKeywords', e => filterKeywords(false));
-btnClickHandler('#hideExpired', e => hideExpired(false));
 
 /** Functions: Fetch User Input: */
 
@@ -152,7 +158,7 @@ function overTemp(temp) {
 function filterKeywords(whitelist=false) {
     let word = promptString(true); // Lowercase input only.
     if (word===null) return; // Exit on bad input.
-    
+
     if (whitelist) {  // Whitelist:
         alterDeals( deals => deals.filter(deal => deal.title.toLowerCase().includes(word)) );
     } else {       // Blacklist:
@@ -189,11 +195,11 @@ function alterDeals(alterCB) {
     if (deals.length < 1) {
         return;
     }
-    
+
     let updatedDeals = alterCB(deals);
     console.log('dealsBefore', deals);
     console.log('dealsAfter', updatedDeals);
-    
+
     // Delete old batch separator, if exists:
     let bs = document.querySelector('#batchSeparator');
     if (bs) {
@@ -226,16 +232,16 @@ function scrapeDealElem(elem) {
         // NB: parseInt cannot handle the £ prefix nor commas.
         price = parseInt(priceElem.innerText.replace('£', '').replace(',', ''));
     }
-    
+
     // Scrape date:
     let ribbons = elem.querySelectorAll('.metaRibbon');
     let lastRibbon = ribbons[ribbons.length - 1];
     let dateStr = lastRibbon.querySelector('.hide--toW3').innerText;
     let date = parseDealDate(dateStr);
-    
+
     // Scrape title:
     let title = elem.querySelector('.thread-title').innerText;
-    
+
     return { score, expired, price, date, dateStr, title };
 }
 
@@ -252,19 +258,19 @@ function scrapeDealElem(elem) {
  */
 function parseDealDate(str) {
     const MAX_MONTH_STR_LEN = 6; // Length of e.g. "31 Jan"
-    
+
     // Remove unneeded words:
     for (let keyword of ['Made hot', 'ago', 'Posted', 'Refreshed']) {
         str = str.replace(keyword, '');
     }
     str = str.trim();
-    
+
     let prevLen = str.length;
     // Remove ordinal suffix (st, nd, rd, th), if applicable:
     for (let suffix of ['st', 'nd', 'rd', 'th']) {
         str = str.replace(suffix, '');
     }
-    
+
     let date = null;
     // If this has a month string e.g. "13 Nov":
     if (prevLen !== str.length) {
@@ -275,11 +281,11 @@ function parseDealDate(str) {
             str += ' ' + now.getFullYear();
         }
         date = new Date(str);
-        
+
     // This is a time-only date e.g. "1 h, 34 m":
     } else {
         let hours = 0; // Hours/mins to subtract from curr date.
-        let mins = 0; 
+        let mins = 0;
         let parts = str.split(',');
         if (parts.length > 1) {
             hours = parseInt(parts[0]);
@@ -290,14 +296,14 @@ function parseDealDate(str) {
         let secsDiff = hours*60*60 + 60*mins;
         date = new Date(Date.now() - secsDiff*1000);
     }
-    
+
     return date;
 }
 
 /**
  * Load content from other pages, and add to DOM.
- * @param {*} numPagesToLoad 
- * @param {Event} event 
+ * @param {*} numPagesToLoad
+ * @param {Event} event
  * @see nextPageIdx (Global)
  */
 async function loadPages(numPagesToLoad, event) {
@@ -310,7 +316,7 @@ async function loadPages(numPagesToLoad, event) {
         let nodes = Array.from(await getPageDeals(baseURL + '?page=' + nextPageIdx));
         // nodes.forEach(n => { container.appendChild(n); });
         let nodeHTML = nodes.map(n => n.outerHTML).join('');
-        dealContainer.innerHTML = dealContainer.innerHTML + nodeHTML; 
+        dealContainer.innerHTML = dealContainer.innerHTML + nodeHTML;
         nextPageIdx++;
     }
     // Update visible page numbers on all buttons:

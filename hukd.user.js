@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name       HUKD Enhancements
-// @include    https://www.hotukdeals.com*
-// @version    1.0.2
+// @include    https://www.hotukdeals.com/search*
+// @version    1.0.3
 // ==/UserScript==
 
 const DEAL_SELECTOR = 'article.thread--type-list';
@@ -310,10 +310,11 @@ async function loadPages(numPagesToLoad, event) {
     // Show "progressing" indicator on clicked button:
     event.target.innerText = '...';
     let dealContainer = getDealContainer();
-    let baseURL = location.origin + location.pathname;
+    let searchQuery = (new URLSearchParams(location.search)).get('q');
+    let currSearchURL = location.origin + location.pathname + '?q=' + searchQuery;
     let loadedCount = 0;
     for (let i = 0; i < numPagesToLoad; i++) {
-        let nodes = Array.from(await getPageDeals(baseURL + '?page=' + nextPageIdx));
+        let nodes = Array.from(await getPageDeals(currSearchURL + '&page=' + nextPageIdx));
         // nodes.forEach(n => { container.appendChild(n); });
         let nodeHTML = nodes.map(n => n.outerHTML).join('');
         dealContainer.innerHTML = dealContainer.innerHTML + nodeHTML;
